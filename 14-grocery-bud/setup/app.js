@@ -17,50 +17,7 @@ form.addEventListener('submit', (e) => {
   const value = grocery.value
   const id = new Date().getTime().toString()
   if (value && !editFlag) {
-    const element = document.createElement('article')
-    element.classList.add('grocery-item')
-    const attr = document.createAttribute('data-id')
-    attr.value = id
-    element.setAttributeNode(attr)
-    element.innerHTML = `    
-    <p class="title">${value}</p>
-    <div class="btn-container">
-      <button class="edit-btn">
-        <i class="fas fa-edit"></i>
-      </button>
-      <button class="delete-btn">
-        <i class="fas fa-trash"></i>
-      </button>
-    </div>
-    `
-    const deleteBtn = element.querySelector('.delete-btn')
-    const editBtn = element.querySelector('.edit-btn')
-
-    deleteBtn.addEventListener('click', (e) => {
-      const item = e.currentTarget.parentElement.parentElement
-      const id = item.dataset.id
-
-      list.removeChild(item)
-      if (list.children.length === 0) {
-        container.classList.remove('show-container')
-      }
-      displayAlert('item removed', 'danger')
-      setBackToDefault()
-      removeFromLocalStorage(id)
-    })
-
-    editBtn.addEventListener('click', (e) => {
-      const element = e.currentTarget.parentElement.parentElement
-      // set edit item
-      editElement = e.currentTarget.parentElement.previousElementSibling
-      // set from value
-      grocery.value = editElement.innerHTML
-      editFlag = true
-      editID = element.dataset.id
-      submitBtn.textContent = 'edit'
-    })
-
-    list.appendChild(element)
+    createListItems(id, value)
     displayAlert('item added to the list', 'success')
     container.classList.add('show-container')
     addToLocalStorage(id, value)
@@ -86,6 +43,17 @@ clearBtn.addEventListener('click', () => {
   container.classList.remove('show-container')
   displayAlert('empty list', 'danger')
   setBackToDefault()
+  localStorage.removeItem('list')
+})
+
+window.addEventListener('DOMContentLoaded', () => {
+  let items = getLocalStorage()
+  if (items.length > 0) {
+    items.forEach((item) => {
+      createListItems(item.id, item.value)
+    })
+  }
+  container.classList.add('show-container')
 })
 // ****** FUNCTIONS **********
 const displayAlert = (text, action) => {
@@ -106,7 +74,80 @@ const setBackToDefault = () => {
 }
 
 // ****** LOCAL STORAGE **********
-const addToLocalStorage = (id, value) => {}
-const removeFromLocalStorage = (id) => {}
-const editLocalStorage = (id, value) => {}
-// ****** SETUP ITEMS **********
+const addToLocalStorage = (id, value) => {
+  const grocery = { id, value }
+  let items = getLocalStorage()
+  items.push(grocery)
+  localStorage.setItem('list', JSON.stringify(items))
+}
+const removeFromLocalStorage = (id) => {
+  let items = getLocalStorage()
+  items = items.filter((item) => {
+    if (item.id !== id) {
+      return item
+    }
+  })
+  localStorage.setItem('list', JSON.stringify(items))
+}
+const editLocalStorage = (id, value) => {
+  let items = getLocalStorage()
+  items = items.map((item) => {
+    if (item.id === id) {
+      item.value = value
+    }
+    return item
+  })
+  localStorage.setItem('list', JSON.stringify(items))
+}
+const getLocalStorage = () => {
+  return localStorage.getItem('list')
+    ? JSON.parse(localStorage.getItem('list'))
+    : []
+}
+
+const createListItems = (id, value) => {
+  const element = document.createElement('article')
+  element.classList.add('grocery-item')
+  const attr = document.createAttribute('data-id')
+  attr.value = id
+  element.setAttributeNode(attr)
+  element.innerHTML = `    
+    <p class="title">${value}</p>
+    <div class="btn-container">
+      <button class="edit-btn">
+        <i class="fas fa-edit"></i>
+      </button>
+      <button class="delete-btn">
+        <i class="fas fa-trash"></i>
+      </button>
+    </div>
+    `
+  const deleteBtn = element.querySelector('.delete-btn')
+  const editBtn = element.querySelector('.edit-btn')
+
+  deleteBtn.addEventListener('click', (e) => {
+    const item = e.currentTarget.parentElement.parentElement
+    const id = item.dataset.id
+
+    list.removeChild(item)
+    if (list.children.length === 0) {
+      container.classList.remove('show-container')
+    }
+    displayAlert('item removed', 'danger')
+    setBackToDefault()
+    removeFromLocalStorage(id)
+  })
+
+  editBtn.addEventListener('click', (e) => {
+    const element = e.currentTarget.parentElement.parentElement
+    // set edit item
+    editElement = e.currentTarget.parentElement.previousElementSibling
+    // set from value
+    grocery.value = editElement.innerHTML
+    editFlag = true
+    editID = element.dataset.id
+    submitBtn.textContent = 'edit'
+  })
+
+  list.appendChild(element)
+}
